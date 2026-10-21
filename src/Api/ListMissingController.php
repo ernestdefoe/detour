@@ -2,6 +2,7 @@
 
 namespace Ernestdefoe\Detour\Api;
 
+use Ernestdefoe\Detour\Like;
 use Ernestdefoe\Detour\Log\Missing;
 use Ernestdefoe\Detour\Rules\Matcher;
 use Ernestdefoe\Detour\Rules\RuleSet;
@@ -30,7 +31,7 @@ class ListMissingController implements RequestHandlerInterface
 
         $q = trim((string) $this->param($request, 'q', ''));
         if ($q !== '') {
-            $query->where('url', 'like', '%'.addcslashes($q, '%_\\').'%');
+            $query->where('url', Like::operator($query->getQuery()), Like::pattern($q));
         }
 
         $total = $query->count();

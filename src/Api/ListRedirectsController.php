@@ -2,6 +2,7 @@
 
 namespace Ernestdefoe\Detour\Api;
 
+use Ernestdefoe\Detour\Like;
 use Ernestdefoe\Detour\Redirect;
 use Laminas\Diactoros\Response\JsonResponse;
 use Psr\Http\Message\ResponseInterface;
@@ -22,8 +23,9 @@ class ListRedirectsController implements RequestHandlerInterface
 
         $q = trim((string) $this->param($request, 'q', ''));
         if ($q !== '') {
-            $like = '%'.addcslashes($q, '%_\\').'%';
-            $query->where(fn ($w) => $w->where('source', 'like', $like)->orWhere('target', 'like', $like)->orWhere('note', 'like', $like));
+            $op = Like::operator($query->getQuery());
+            $like = Like::pattern($q);
+            $query->where(fn ($w) => $w->where('source', $op, $like)->orWhere('target', $op, $like)->orWhere('note', $op, $like));
         }
 
         $type = (string) $this->param($request, 'type', '');

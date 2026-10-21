@@ -19,6 +19,9 @@ class PageTest extends DetourTestCase
         $this->assertStringContainsString('Welcome to the garden club', $body);
         $this->assertStringContainsString(self::BASE.'/d/1', $body);
         $this->assertStringNotContainsString('Secret garden', $body, 'a private discussion is never suggested');
+
+        // Case doesn't matter, on PostgreSQL too.
+        $this->assertStringContainsString('Welcome to the garden club', (string) $this->get('/WELCOME-aboard')->getBody());
     }
 
     #[Test]

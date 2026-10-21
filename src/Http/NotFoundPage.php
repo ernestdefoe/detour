@@ -2,6 +2,7 @@
 
 namespace Ernestdefoe\Detour\Http;
 
+use Ernestdefoe\Detour\Like;
 use Ernestdefoe\Detour\Settings;
 use Ernestdefoe\Detour\Url;
 use Flarum\Discussion\Discussion;
@@ -116,9 +117,11 @@ class NotFoundPage
         return $this->cache->remember($key, 3600, function () use ($words) {
             $query = Discussion::query()->whereVisibleTo(new Guest());
 
-            $query->where(function ($q) use ($words) {
+            $like = Like::operator($query->getQuery());
+
+            $query->where(function ($q) use ($words, $like) {
                 foreach ($words as $word) {
-                    $q->orWhere('title', 'like', '%'.addcslashes($word, '%_\\').'%');
+                    $q->orWhere('title', $like, Like::pattern($word));
                 }
             });
 
