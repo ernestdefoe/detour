@@ -1,0 +1,78 @@
+{
+    "name": "ernestdefoe/detour",
+    "description": "A 404 log and redirect manager for Flarum: see which addresses visitors hit that no longer exist, redirect them (301, 302 or 410; exact, prefix or regular expression), bring old phpBB, vBulletin, XenForo, MyBB, SMF, Invision and Discourse links back to life, and show a friendlier page not found.",
+    "keywords": ["flarum", "redirect", "redirects", "301", "404", "not found", "broken links", "migration", "seo", "phpbb", "vbulletin", "xenforo", "mybb", "smf", "invision", "discourse"],
+    "type": "flarum-extension",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ernest Defoe",
+            "email": "ernestdefoe@gmail.com"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/ernestdefoe/detour/issues",
+        "source": "https://github.com/ernestdefoe/detour"
+    },
+    "funding": [
+        {
+            "type": "buymeacoffee",
+            "url": "https://buymeacoffee.com/ernestdefoe"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "flarum/core": "^2.0"
+    },
+    "suggest": {
+        "ernestdefoe/importer": "Migration presets send old addresses to the discussions, tags and members the Importer created, through its id maps."
+    },
+    "extra": {
+        "flarum-extension": {
+            "title": "Detour",
+            "category": "feature",
+            "icon": {
+                "name": "fas fa-route",
+                "backgroundColor": "#b45309",
+                "color": "#ffffff"
+            }
+        },
+        "flarum-cli": {
+            "modules": {
+                "backendTesting": true,
+                "js": true
+            }
+        }
+    },
+    "minimum-stability": "beta",
+    "prefer-stable": true,
+    "autoload": {
+        "psr-4": {
+            "Ernestdefoe\\Detour\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Ernestdefoe\\Detour\\Tests\\": "tests/"
+        }
+    },
+    "require-dev": {
+        "flarum/phpstan": "^2.0",
+        "flarum/testing": "^2.0",
+        "flarum/tags": "^2.0"
+    },
+    "scripts": {
+        "test": [
+            "@test:integration"
+        ],
+        "test:integration": "phpunit -c tests/phpunit.integration.xml",
+        "test:setup": "@php tests/integration/setup.php",
+        "analyse:phpstan": "phpstan analyse"
+    },
+    "scripts-descriptions": {
+        "test": "Runs all tests.",
+        "test:integration": "Runs all integration tests.",
+        "test:setup": "Sets up a database for use with integration tests. Execute this only once.",
+        "analyse:phpstan": "Run static analysis"
+    }
+}
