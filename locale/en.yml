@@ -170,8 +170,10 @@ ernestdefoe-detour:
       run: Check
       ok: reaches Flarum
       blocked: answered by the web server, never reaches Flarum
-      fix: "To redirect {exts} addresses, add this to the site's nginx server block (before the other location blocks for those types), then reload nginx:"
-      fix_help: "For .php, the block must come before the one that passes .php files to PHP. Apache with Flarum's .htaccess needs nothing."
+      fix_php: "To redirect old .php addresses (phpBB, vBulletin, MyBB, SMF), change one line in the nginx block that passes .php files to PHP: its try_files becomes"
+      fix_php_help: "Existing .php files still run as before; only missing ones go to Flarum. Never add a separate block for .php that serves files directly: that would hand out source code."
+      fix: "To redirect {exts} addresses, add this to the site's nginx server block, above any other block for those types:"
+      fix_help: "Then reload nginx and check again. Apache with Flarum's .htaccess needs nothing."
 
     csv:
       export_title: Export

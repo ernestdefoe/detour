@@ -120,7 +120,9 @@ export default class MissingTab extends Component {
             </details>
           ) : null}
         </td>
-        <td className="DetourRow-hits">{row.hits}</td>
+        <td className="DetourRow-hits" data-label={t('missing.col_hits')}>
+          {row.hits}
+        </td>
         <td className="DetourRow-when">
           {humanTime(row.lastSeenAt)}
           <div>{t('missing.first_seen', { time: humanTime(row.firstSeenAt) })}</div>

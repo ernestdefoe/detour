@@ -4,7 +4,7 @@ import Button from 'flarum/common/components/Button';
 import Select from 'flarum/common/components/Select';
 import Switch from 'flarum/common/components/Switch';
 import Stream from 'flarum/common/utils/Stream';
-import { t, request } from './util';
+import { t, quietRequest } from './util';
 
 /** Adds or edits one redirect. `attrs.redirect` to edit, `attrs.source` to prefill. */
 export default class RedirectModal extends FormModal {
@@ -171,7 +171,7 @@ export default class RedirectModal extends FormModal {
       note: this.note(),
     };
 
-    request(id ? 'PATCH' : 'POST', id ? `/redirects/${id}` : '/redirects', body)
+    quietRequest(id ? 'PATCH' : 'POST', id ? `/redirects/${id}` : '/redirects', body)
       .then((response) => {
         this.hide();
         this.attrs.onsave && this.attrs.onsave(response.data);

@@ -138,7 +138,7 @@ export default class RedirectsTab extends Component {
           <span className="DetourStatus">{r.status}</span> <span className="DetourMono">{to}</span>
           {r.external ? <i className="fas fa-external-link-alt DetourRow-ext" title={t('redirects.external')} /> : null}
         </td>
-        <td className="DetourRow-hits">
+        <td className="DetourRow-hits" data-label={t('redirects.col_hits')}>
           {r.hits}
           {r.lastHitAt ? <div className="DetourRow-when">{humanTime(r.lastHitAt)}</div> : null}
         </td>

@@ -39,7 +39,7 @@ class DetourPage extends ExtensionPage {
               </Button>
             ))}
           </nav>
-          <Tab key={this.tab} />
+          <Tab />
         </div>
       </div>,
       20

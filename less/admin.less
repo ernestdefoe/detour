@@ -55,4 +55,5 @@
   .DetourTable tr { display: block; border-top: 1px solid var(--control-bg); padding: 8px 0; }
   .DetourTable td { display: block; border: 0; padding: 2px 0; }
   .DetourRow-actions { text-align: left; }
+  .DetourTable td[data-label]::before { content: attr(data-label) ": "; color: var(--muted-color); font-size: 12px; }
 }

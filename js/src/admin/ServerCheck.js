@@ -20,6 +20,9 @@ export default class ServerCheck extends Component {
 
   view() {
     const blocked = this.results ? EXTENSIONS.filter((ext) => !this.results[ext]) : [];
+    // .php needs its own fix: a separate block that serves existing .php files
+    // as files would hand out source code.
+    const others = blocked.filter((ext) => ext !== 'php');
 
     return (
       <div className="DetourServerCheck">
@@ -38,13 +41,20 @@ export default class ServerCheck extends Component {
             ))}
           </ul>
         ) : null}
-        {blocked.length ? (
+        {blocked.includes('php') ? (
           <div className="DetourServerCheck-fix">
-            <p>{t('server.fix', { exts: blocked.map((e) => '.' + e).join(', ') })}</p>
-            <pre className="DetourMono">{`location ~* \\.(?:${blocked.join('|')})$ {\n  try_files $uri /index.php?$query_string;\n}`}</pre>
-            <p className="helpText">{t('server.fix_help')}</p>
+            <p>{t('server.fix_php')}</p>
+            <pre className="DetourMono">{'location ~ \\.php$ {\n  try_files $uri /index.php?$query_string;\n  …\n}'}</pre>
+            <p className="helpText">{t('server.fix_php_help')}</p>
           </div>
         ) : null}
+        {others.length ? (
+          <div className="DetourServerCheck-fix">
+            <p>{t('server.fix', { exts: others.map((e) => '.' + e).join(', ') })}</p>
+            <pre className="DetourMono">{`location ~* \\.(?:${others.join('|')})$ {\n  try_files $uri /index.php?$query_string;\n}`}</pre>
+          </div>
+        ) : null}
+        {blocked.length ? <p className="helpText">{t('server.fix_help')}</p> : null}
       </div>
     );
   }

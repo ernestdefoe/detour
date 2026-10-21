@@ -33,9 +33,9 @@ export default class PresetsTab extends Component {
         <p className="helpText">{t('presets.help')}</p>
         {this.runs.length ? <p className="helpText">{t('presets.importer_help')}</p> : null}
 
-        <div className="DetourPresets">{this.platforms.map((p) => this.platform(p))}</div>
-
         <ServerCheck />
+
+        <div className="DetourPresets">{this.platforms.map((p) => this.platform(p))}</div>
       </div>
     );
   }
