@@ -17,6 +17,9 @@ Detour shows you which addresses people are asking for, lets you send them somew
 - **Test an address.** Type any address and see what the forum would do with it: which rule, which status, where to.
 - **Chains collapse, loops are refused.** `/a → /b → /c` is sent as one redirect to `/c`. A rule that would lead back to itself, directly or through others, can't be saved, and a loop is never served.
 - **A friendlier page not found.** Your own heading and message, a search box already filled with the words from the address, and discussions whose titles share them (only ones a guest can see).
+
+![The friendlier page not found](screenshots/not-found.png)
+
 - **CSV import and export**, with a "check only" pass that lists bad rows by line before anything is saved.
 
 ![404 log](screenshots/log.png)

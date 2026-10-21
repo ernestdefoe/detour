@@ -143,7 +143,7 @@ ernestdefoe-detour:
       col_hits: Hits
       col_seen: Last seen
       first_seen: "first {time}"
-      covered: "redirected by #{id}"
+      covered: "matches rule #{id}"
       referrers: "{count, plural, one {# referring page} other {# referring pages}}"
       redirect: Redirect it
       ignore: Ignore
