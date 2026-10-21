@@ -175,6 +175,13 @@ class Validator
 
     private function target(string $type, string $target, bool $external): string
     {
+        if (Url::hasControl($target)) {
+            $this->fail('target', 'target_invalid');
+        }
+
+        // Spaces and non-ASCII characters are written as %XX, as a Location header needs.
+        $target = (string) preg_replace_callback('~[^\x21-\x7E]~', fn ($c) => rawurlencode($c[0]), $target);
+
         if ($target === '' || strlen($target) > 1000) {
             $this->fail('target', 'target_required');
         }

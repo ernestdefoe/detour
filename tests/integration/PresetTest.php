@@ -30,6 +30,16 @@ class PresetTest extends DetourTestCase
     }
 
     #[Test]
+    public function tags_are_not_looked_up_while_tags_is_off(): void
+    {
+        $this->extensions = ['ernestdefoe-detour'];
+        $this->api('POST', '/presets', ['platform' => 'phpbb']);
+
+        $this->assertSame(404, $this->get('/viewforum.php?f=2')->getStatusCode());
+        $this->assertSame(404, $this->get('/viewforum.php?f=1')->getStatusCode());
+    }
+
+    #[Test]
     public function reapplying_replaces_and_remove_removes(): void
     {
         $this->api('POST', '/presets', ['platform' => 'xenforo']);

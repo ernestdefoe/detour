@@ -120,8 +120,12 @@ class Matcher
         foreach ($phase['prefix'] as $rule) {
             $prefix = $rule['match'];
             if ($pathKey === $prefix || str_starts_with($pathKey, $prefix.'/')) {
-                // The rest of the path, in its original case.
-                $rest = Url::trimSlash($path) === '/' ? '' : substr(Url::trimSlash($path), strlen($prefix));
+                // The rest of the path, in its original case when lower-casing
+                // left the prefix the same length (it nearly always does).
+                $trimmed = Url::trimSlash($path);
+                $rest = Url::lower(substr($trimmed, 0, strlen($prefix))) === $prefix
+                    ? substr($trimmed, strlen($prefix))
+                    : substr($pathKey, strlen($prefix));
                 $target = $rule['target'] === null ? null : self::joinPath($rule['target'], Url::encode($rest));
 
                 if ($hit = $this->build($rule, $target, [], $rawQuery, $base)) {

@@ -37,7 +37,7 @@ export default class RedirectsTab extends Component {
 
   view() {
     // Dragging only reorders when the whole regex list is on screen in its real order.
-    const sortable = this.sort() === '' && this.q() === '' && (this.type() === '' || this.type() === 'regex');
+    const sortable = this.sort() === '' && this.q() === '' && (this.type() === '' || this.type() === 'regex') && this.items.length >= this.total;
 
     return (
       <div className="DetourTab">

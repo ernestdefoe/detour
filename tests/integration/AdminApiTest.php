@@ -106,6 +106,15 @@ class AdminApiTest extends DetourTestCase
     }
 
     #[Test]
+    public function spaces_and_accents_in_a_target_are_encoded(): void
+    {
+        $response = $this->api('POST', '/redirects', ['source' => '/menu', 'target' => '/t/café crème']);
+
+        $this->assertSame('/t/caf%C3%A9%20cr%C3%A8me', $this->json($response)['data']['target']);
+        $this->assertSame(self::BASE.'/t/caf%C3%A9%20cr%C3%A8me', $this->location($this->get('/menu')));
+    }
+
+    #[Test]
     public function refuses_a_loop_through_other_rules_and_duplicates(): void
     {
         $this->rule(['source' => '/b', 'target' => '/c']);

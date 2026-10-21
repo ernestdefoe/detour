@@ -29,6 +29,9 @@ class NotFoundPage
     /** Words in old forum addresses that say nothing about the content. */
     private const STOP = ['php', 'html', 'htm', 'asp', 'aspx', 'index', 'viewtopic', 'viewforum', 'showthread', 'showpost', 'forumdisplay', 'threads', 'thread', 'forums', 'forum', 'topic', 'topics', 'post', 'posts', 'member', 'members', 'profile', 'page', 'archive', 'discussion', 'discussions', 'the', 'and', 'for', 'with', 'from', 'this', 'that', 'msg', 'tid', 'pid', 'fid', 'uid'];
 
+    /** Uncached suggestion searches allowed per minute, across the forum. */
+    public const SEARCHES_PER_MINUTE = 30;
+
     public function __construct(
         protected ViewFactory $view,
         protected SettingsRepositoryInterface $settings,
@@ -91,8 +94,26 @@ class NotFoundPage
 
         $sorted = $words;
         sort($sorted);
+        $key = 'ernestdefoe-detour.suggest.'.sha1(implode(' ', $sorted));
 
-        return $this->cache->remember('ernestdefoe-detour.suggest.'.sha1(implode(' ', $sorted)), 3600, function () use ($words) {
+        $cached = $this->cache->get($key);
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        /*
+         * A scanner asking for a new random address every time would miss the
+         * cache every time, and each miss is a LIKE over discussion titles.
+         * A forum-wide budget per minute keeps that bounded: past it, the page
+         * is served without suggestions.
+         */
+        $budget = 'ernestdefoe-detour.suggest-budget.'.intdiv(time(), 60);
+        $this->cache->add($budget, 0, 120);
+        if ((int) $this->cache->increment($budget) > self::SEARCHES_PER_MINUTE) {
+            return [];
+        }
+
+        return $this->cache->remember($key, 3600, function () use ($words) {
             $query = Discussion::query()->whereVisibleTo(new Guest());
 
             $query->where(function ($q) use ($words) {

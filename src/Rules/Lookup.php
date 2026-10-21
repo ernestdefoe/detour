@@ -2,6 +2,7 @@
 
 namespace Ernestdefoe\Detour\Rules;
 
+use Flarum\Extension\ExtensionManager;
 use Flarum\Http\SlugManager;
 use Flarum\Tags\Tag;
 use Flarum\User\Guest;
@@ -27,6 +28,7 @@ class Lookup
     public function __construct(
         protected ConnectionInterface $db,
         protected SlugManager $slugs,
+        protected ExtensionManager $extensions,
     ) {
     }
 
@@ -74,7 +76,9 @@ class Lookup
             ->join('discussions', 'discussions.id', '=', 'posts.discussion_id')
             ->where('posts.id', $id)
             ->where('posts.is_private', false)
+            ->whereNull('posts.hidden_at')
             ->where('discussions.is_private', false)
+            ->whereNull('discussions.hidden_at')
             ->first(['posts.discussion_id', 'posts.number']);
 
         return $row ? '/d/'.(int) $row->discussion_id.'/'.(int) $row->number : null;
@@ -82,7 +86,8 @@ class Lookup
 
     private function tag(string $old, ?int $runId): ?string
     {
-        if (! class_exists(Tag::class)) {
+        // Installed but turned off, Tags has no visibility rules to apply.
+        if (! class_exists(Tag::class) || ! $this->extensions->isEnabled('flarum-tags')) {
             return null;
         }
 

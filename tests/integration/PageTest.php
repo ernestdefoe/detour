@@ -67,4 +67,23 @@ class PageTest extends DetourTestCase
 
         $this->assertStringNotContainsString('Welcome to the garden club', (string) $this->get('/garden')->getBody());
     }
+
+    #[Test]
+    public function suggestion_searches_have_a_budget_per_minute(): void
+    {
+        $this->get('/warm-up');
+        $db = $this->database();
+
+        for ($i = 0; $i < \Ernestdefoe\Detour\Http\NotFoundPage::SEARCHES_PER_MINUTE + 10; $i++) {
+            $db->flushQueryLog();
+            $db->enableQueryLog();
+            $this->get('/garden-'.str_repeat('x', 3).chr(97 + $i % 26).chr(97 + intdiv($i, 26)));
+            $searched[] = (bool) array_filter(array_column($db->getQueryLog(), 'query'), fn ($q) => str_contains($q, 'like'));
+            $db->disableQueryLog();
+        }
+
+        // The warm-up spent one; the minute may roll over mid-test, which only allows more.
+        $this->assertGreaterThanOrEqual(\Ernestdefoe\Detour\Http\NotFoundPage::SEARCHES_PER_MINUTE - 1, count(array_filter($searched)));
+        $this->assertLessThan(count($searched), count(array_filter($searched)));
+    }
 }
