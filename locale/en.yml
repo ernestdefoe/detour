@@ -103,7 +103,7 @@ ernestdefoe-detour:
       add_title: Add a redirect
       edit_title: Edit redirect
       type: Match
-      type_help_exact: "The whole address, ignoring case and a trailing slash. Add ?a=1 to match only that query."
+      type_help_exact: "The whole address, ignoring case and a trailing slash. Add ?a=1 to match only that exact query (any other parameter, such as ?fbclid=, makes it a different address)."
       type_help_prefix: "The address and everything below it: /old matches /old/anything, and the rest is added to the target."
       type_help_regex: "A regular expression over the decoded path and query, case-insensitive. Use $1, $2 … in the target."
       source: Old address
@@ -152,7 +152,8 @@ ernestdefoe-detour:
 
     presets:
       help: "Moved here from another forum? Install its preset and the old addresses (topics, posts, forums, members) go to what they became. Preset rules only act where Flarum has no page, so they can never take one of yours."
-      importer_help: "Imported with the Importer? Choose its run so old ids are mapped to the new ones. If you also turned on redirects in the Importer, it answers first; this adds hit counts and the 404 log."
+      importer_help: "Imported with the Importer? Choose its run so old ids are mapped to the new ones. The Importer keeps no map of posts, so links to single posts can only be followed when ids were kept; the discussion links still work."
+      importer_on: "The Importer's own old-address redirects are turned on, and they answer before these presets. Turn them off in the Importer if you want Detour's hit counts and 404 log for those addresses."
       ids_kept: "Ids were kept (no Importer run)"
       run: "Importer run #{id} ({status}, {topics} discussions)"
       addresses: "{count, plural, one {# kind of address} other {# kinds of address}}"
@@ -193,7 +194,7 @@ ernestdefoe-detour:
       friendly_page_label: Friendlier page not found
       friendly_page_help: "Instead of Flarum's bare message: a search box filled with the words from the address, and discussions that match them."
       suggestions_label: Suggest discussions
-      suggestions_help: "Only discussions a guest can see; cached for an hour per set of words."
+      suggestions_help: "Only discussions a guest can see; refreshed every ten minutes."
       page_title_label: Heading
       page_title_help: "Leave empty for \"Page not found\"."
       page_message_label: Message

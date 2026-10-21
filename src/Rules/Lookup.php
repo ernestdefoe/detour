@@ -100,7 +100,7 @@ class Lookup
             }
             $query->where('id', $id);
         } else {
-            $query->where('slug', $old);
+            $query->whereRaw('LOWER('.$query->getQuery()->getGrammar()->wrap('slug').') = ?', [mb_strtolower($old, 'UTF-8')]);
         }
 
         $slug = $query->value('slug');
@@ -119,7 +119,8 @@ class Lookup
             }
             $query->where('id', $id);
         } else {
-            $query->where('username', $old);
+            // Usernames are unique whatever their case; PostgreSQL and SQLite compare case.
+            $query->whereRaw('LOWER('.$query->getQuery()->getGrammar()->wrap('username').') = ?', [mb_strtolower($old, 'UTF-8')]);
         }
 
         $user = $query->first();

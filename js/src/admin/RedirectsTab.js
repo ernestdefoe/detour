@@ -119,7 +119,8 @@ export default class RedirectsTab extends Component {
         draggable={draggable}
         ondragstart={draggable ? (e) => this.dragStart(e, r) : undefined}
         ondragover={draggable ? (e) => this.dragOver(e, r) : undefined}
-        ondragend={draggable ? () => this.dragEnd() : undefined}
+        ondrop={draggable ? (e) => e.preventDefault() : undefined}
+        ondragend={draggable ? (e) => this.dragEnd(e) : undefined}
       >
         <td className="DetourRow-type">
           {draggable ? <i className="fas fa-grip-vertical DetourRow-grip" aria-hidden="true" /> : null}
@@ -205,9 +206,15 @@ export default class RedirectsTab extends Component {
     this.items.splice(to, 0, moved);
   }
 
-  dragEnd() {
+  dragEnd(e) {
     if (this.dragging === null) return;
     this.dragging = null;
+
+    // Dropped outside the list, or cancelled with Esc: put the order back.
+    if (e.dataTransfer.dropEffect === 'none') {
+      this.load();
+      return;
+    }
 
     const ids = this.items.filter((x) => x.type === 'regex').map((x) => x.id);
     request('POST', '/redirects/order', { ids }).then(() => m.redraw());

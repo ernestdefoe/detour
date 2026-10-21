@@ -29,7 +29,7 @@ class RedirectTest extends DetourTestCase
         $other = $this->get('/page.php?a=9');
         $this->assertSame(302, $other->getStatusCode());
         $this->assertSame(self::BASE.'/d/2', $this->location($other));
-        $this->assertSame('no-store', $other->getHeaderLine('Cache-Control'));
+        $this->assertSame('private, no-store', $other->getHeaderLine('Cache-Control'));
     }
 
     #[Test]

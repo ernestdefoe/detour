@@ -47,10 +47,12 @@ final class Presets
             'vbulletin5' => [
                 ['user', '(?:^|/)member/(\d+)', '/member/9-alice'],
                 ['topic', '(?:^|/)node/(\d+)', '/node/1234'],
-                ['topic', '(?:^|/)(\d+)-[^/?]+/?$', '/forum/general/1234-my-topic'],
+                // Never Flarum's own /d/77-slug: a private discussion is "missing" to a guest.
+                ['topic', '^(?!/(?:d|t|u|p)/)(?:.*/)?(\d+)-[^/?]+(?:/page\d+)?/?$', '/forum/general/1234-my-topic'],
             ],
             'xenforo' => [
                 ['post', '(?:^|[/?])posts/(\d+)', '/posts/5678/'],
+                ['post', '(?:^|[/?])goto/post\?(?:.*&)?id=(\d+)', '/goto/post?id=5678'],
                 ['post', '(?:^|[/?])threads/[^/?]*/post-(\d+)', '/threads/my-topic.1234/post-5678'],
                 ['topic', '(?:^|[/?])threads/(?:[^/?]*\.)?(\d+)', '/threads/my-topic.1234/'],
                 ['tag', '(?:^|[/?])forums/(?:[^/?]*\.)?(\d+)', '/forums/general.4/'],
@@ -59,6 +61,7 @@ final class Presets
             'mybb' => [
                 ['post', '(?:^|/)showthread\.php\?(?:.*&)?pid=(\d+)', '/showthread.php?tid=1234&pid=5678'],
                 ['post', '(?:^|/)post-(\d+)', '/post-5678.html'],
+                ['post', '(?:^|/)thread-\d+-post-(\d+)', '/thread-1234-post-5678.html'],
                 ['topic', '(?:^|/)showthread\.php\?(?:.*&)?tid=(\d+)', '/showthread.php?tid=1234'],
                 ['topic', '(?:^|/)thread-(\d+)', '/thread-1234.html'],
                 ['tag', '(?:^|/)forumdisplay\.php\?(?:.*&)?fid=(\d+)', '/forumdisplay.php?fid=4'],
@@ -75,6 +78,7 @@ final class Presets
             ],
             'invision' => [
                 ['post', '(?:^|/)topic/\d+[^?]*\?(?:.*&)?comment=(\d+)', '/topic/1234-my-topic/?do=findComment&comment=5678'],
+                ['post', '[?&]showtopic=\d+&(?:.*&)?p=(\d+)', '/index.php?showtopic=1234&view=findpost&p=5678'],
                 ['topic', '(?:^|/)topic/(\d+)', '/topic/1234-my-topic/'],
                 ['topic', '[?&]showtopic=(\d+)', '/index.php?showtopic=1234'],
                 ['tag', '(?:^|/)forum/(\d+)', '/forum/4-general/'],
@@ -85,15 +89,15 @@ final class Presets
             'discourse' => [
                 ['topic', '(?:^|/)t/(\d+)(?:/(\d+))?/?(?:\?|$)', '/t/1234/5'],
                 ['topic', '(?:^|/)t/[^/?]+/(\d+)(?:/(\d+))?/?(?:\?|$)', '/t/my-topic/1234'],
-                ['tag', '(?:^|/)c/(?:[^/?]+/)*?(\d+)/?(?:\?|$)', '/c/general/4'],
-                ['tag', '(?:^|/)c/([^/?]+)/?(?:\?|$)', '/c/general'],
+                ['tag', '(?:^|/)c/(?:[^/?]+/)*?(\d+)(?:/l/[^/?]+)?/?(?:\?|$)', '/c/general/4/l/latest'],
+                ['tag', '(?:^|/)c/([^/?]+)(?:/l/[^/?]+)?/?(?:\?|$)', '/c/general'],
                 ['user', '(?:^|/)u/([^/?]+)', '/u/alice'],
             ],
             'vanilla' => [
                 ['post', '(?:^|/)discussion/comment/(\d+)', '/discussion/comment/5678'],
                 ['topic', '(?:^|/)discussion/(\d+)', '/discussion/1234/my-topic'],
                 ['tag', '(?:^|/)categories/([^/?]+)', '/categories/general'],
-                ['user', '(?:^|/)profile/(?:\d+/)?([^/?]+)', '/profile/alice'],
+                ['user', '(?:^|/)profile/(?:(?:comments|discussions|activity|notifications)/)?(?:\d+/)?([^/?]+)', '/profile/comments/9/alice'],
             ],
             'nodebb' => [
                 ['topic', '(?:^|/)topic/(\d+)', '/topic/1234/my-topic'],

@@ -23,9 +23,11 @@ class ListRedirectsController implements RequestHandlerInterface
 
         $q = trim((string) $this->param($request, 'q', ''));
         if ($q !== '') {
-            $op = Like::operator($query->getQuery());
-            $like = Like::pattern($q);
-            $query->where(fn ($w) => $w->where('source', $op, $like)->orWhere('target', $op, $like)->orWhere('note', $op, $like));
+            $query->where(function ($w) use ($q) {
+                foreach (['source', 'target', 'note'] as $column) {
+                    Like::where($w, $column, $q, 'or');
+                }
+            });
         }
 
         $type = (string) $this->param($request, 'type', '');

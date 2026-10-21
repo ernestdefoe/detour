@@ -28,22 +28,20 @@ class TestController implements RequestHandlerInterface
         $this->admin($request);
 
         $input = trim((string) ($this->body($request)['url'] ?? ''));
-        $subject = Url::source($input);
+        $base = rtrim($this->url->to('forum')->base(), '/');
+        $raw = Url::raw($input, $base);
 
-        if ($subject === null) {
+        if ($raw === null) {
             return new JsonResponse(['valid' => false]);
         }
 
-        [$path, $query] = array_pad(explode('?', $subject, 2), 2, '');
-        $path = Url::encode($path);
-        $query = str_replace(['%', '+'], ['%25', '%2B'], $query);
+        [$path, $query] = Url::split($raw);
 
-        if (Url::reserved(rawurldecode($path))) {
+        if (Url::reserved(Url::subject($path, ''))) {
             return new JsonResponse(['valid' => true, 'reserved' => true]);
         }
 
         $set = $this->rules->get();
-        $base = rtrim($this->url->to('forum')->base(), '/');
         $out = ['valid' => true, 'reserved' => false];
 
         foreach (['always', 'missing'] as $phase) {

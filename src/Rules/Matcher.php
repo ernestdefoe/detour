@@ -25,8 +25,11 @@ class Matcher
      * @param array<string, mixed> $set compiled rules
      * @param string $phase always | missing
      * @param string $rawQuery the request's query, as sent (for "keep query")
+     * @param list<string> $follow phases whose rules a chain may pass through:
+     *                             at request time only "always" ones can be known
+     *                             to apply; saving a rule checks both
      */
-    public function match(array $set, string $phase, string $path, string $rawQuery, string $base): ?Hit
+    public function match(array $set, string $phase, string $path, string $rawQuery, string $base, array $follow = ['always']): ?Hit
     {
         $subject = Url::subject($path, $rawQuery);
         $hit = $this->first($set[$phase], $subject, $rawQuery, $base);
@@ -35,26 +38,39 @@ class Matcher
             return $hit;
         }
 
-        // Collapse chains through "always" rules, refusing loops.
-        $seen = [Url::key($subject) => true];
+        /*
+         * Collapse chains, refusing loops. An address counts as seen again only
+         * when it is the very same text: a rule that just drops a trailing
+         * slash or changes case is a redirect, not a loop, and a rule that
+         * really does send an address back to itself is caught one hop later,
+         * when it produces the same target again.
+         */
+        $seen = [$subject => true];
         $chain = [];
         $current = $hit;
 
-        for ($hop = 0; $hop < self::MAX_HOPS; $hop++) {
-            $next = substr((string) $current->target, strlen($base));
-            [$nextPath, $nextQuery] = array_pad(explode('?', explode('#', $next, 2)[0], 2), 2, '');
+        for ($hop = 0; ; $hop++) {
+            [$nextPath, $nextQuery] = Url::split(substr((string) $current->target, strlen($base)));
             $nextSubject = Url::subject($nextPath, $nextQuery);
-            $key = Url::key($nextSubject);
 
-            if (isset($seen[$key])) {
+            if (isset($seen[$nextSubject])) {
                 return null;
             }
-            $seen[$key] = true;
+            $seen[$nextSubject] = true;
 
-            $further = $this->first($set['always'], $nextSubject, $nextQuery, $base);
+            $further = null;
+            foreach ($follow as $through) {
+                if ($further = $this->first($set[$through], $nextSubject, $nextQuery, $base)) {
+                    break;
+                }
+            }
 
             if ($further === null) {
                 break;
+            }
+
+            if ($hop === self::MAX_HOPS) {
+                return null;
             }
 
             $chain[] = $further->rule['id'];
@@ -62,10 +78,6 @@ class Matcher
 
             if ($further->target === null || ! str_starts_with($further->target, $base.'/')) {
                 break;
-            }
-
-            if ($hop === self::MAX_HOPS - 1) {
-                return null;
             }
         }
 

@@ -155,7 +155,7 @@ export default class MissingTab extends Component {
   }
 
   redirect(row) {
-    app.modal.show(RedirectModal, { source: decode(row.url), onsave: () => this.load() });
+    app.modal.show(RedirectModal, { source: row.url, onsave: () => this.load() });
   }
 
   ignore(row) {

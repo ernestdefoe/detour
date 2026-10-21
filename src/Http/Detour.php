@@ -52,7 +52,7 @@ class Detour implements MiddlewareInterface
     {
         $method = strtoupper($request->getMethod());
         $path = $request->getUri()->getPath();
-        $decoded = rawurldecode($path === '' ? '/' : $path);
+        $decoded = Url::subject($path, '');
 
         if (($method !== 'GET' && $method !== 'HEAD') || Url::reserved($decoded)) {
             return $handler->handle($request);
@@ -65,7 +65,7 @@ class Detour implements MiddlewareInterface
         $query = $request->getUri()->getQuery();
 
         if ($hit = $this->find('always', $path, $query)) {
-            return $this->respond($hit, $request);
+            return $this->respond($hit, $request, true);
         }
 
         try {
@@ -87,7 +87,7 @@ class Detour implements MiddlewareInterface
 
         try {
             if ($hit = $this->find('missing', $path, $query)) {
-                return $this->respond($hit, $request);
+                return $this->respond($hit, $request, false);
             }
 
             $recorder = $this->container->make(Recorder::class);
@@ -122,7 +122,8 @@ class Detour implements MiddlewareInterface
             ->match($set, $phase, $path, $query, rtrim($this->container->make(UrlGenerator::class)->to('forum')->base(), '/'));
     }
 
-    private function respond(Hit $hit, ServerRequestInterface $request): ResponseInterface
+    /** @param bool $shared whether every visitor gets this answer ("always" rules) */
+    private function respond(Hit $hit, ServerRequestInterface $request, bool $shared): ResponseInterface
     {
         try {
             $this->container->make(ConnectionInterface::class)->table('detour_redirects')->where('id', $hit->rule['id'])->increment('hits', 1, ['last_hit_at' => Carbon::now()]);
@@ -140,8 +141,13 @@ class Detour implements MiddlewareInterface
          * A day's cache, not forever. Browsers keep a bare 301 indefinitely,
          * so a mistaken rule would follow visitors around after it was fixed;
          * search engines still read 301 as a permanent move.
+         *
+         * An "only if missing" redirect is never cached: whether Flarum had a
+         * page depends on who is asking (a private discussion is missing to a
+         * guest), so a proxy must not hand one visitor's answer to another, and
+         * a guest who then logs in must reach the page.
          */
-        $headers = $hit->status === 301 ? ['Cache-Control' => 'public, max-age=86400'] : ['Cache-Control' => 'no-store'];
+        $headers = ['Cache-Control' => $hit->status === 301 && $shared ? 'public, max-age=86400' : 'private, no-store'];
 
         return new RedirectResponse($hit->target, $hit->status, $headers);
     }

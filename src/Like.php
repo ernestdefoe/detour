@@ -2,18 +2,22 @@
 
 namespace Ernestdefoe\Detour;
 
-use Illuminate\Contracts\Database\Query\Builder;
-
-/** A case-insensitive "contains" on every database (PostgreSQL's LIKE is case-sensitive). */
+/**
+ * A case-insensitive "contains" that behaves the same on every database:
+ * PostgreSQL's LIKE is case-sensitive, and SQLite has no escape character
+ * unless one is named, so `_` and `%` in a search would act as wildcards.
+ */
 final class Like
 {
-    public static function operator(Builder $query): string
+    /**
+     * @param \Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder<covariant \Illuminate\Database\Eloquent\Model> $query
+     */
+    public static function where(object $query, string $column, string $text, string $boolean = 'and'): void
     {
-        return $query->getConnection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
-    }
+        $base = $query instanceof \Illuminate\Database\Eloquent\Builder ? $query->getQuery() : $query;
+        $wrapped = $base->getGrammar()->wrap($column);
+        $pattern = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], mb_strtolower($text, 'UTF-8')).'%';
 
-    public static function pattern(string $text): string
-    {
-        return '%'.addcslashes($text, '%_\\').'%';
+        $query->whereRaw("LOWER($wrapped) LIKE ? ESCAPE '!'", [$pattern], $boolean);
     }
 }

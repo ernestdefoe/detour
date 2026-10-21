@@ -81,7 +81,7 @@ class PageTest extends DetourTestCase
             $db->flushQueryLog();
             $db->enableQueryLog();
             $this->get('/garden-'.str_repeat('x', 3).chr(97 + $i % 26).chr(97 + intdiv($i, 26)));
-            $searched[] = (bool) array_filter(array_column($db->getQueryLog(), 'query'), fn ($q) => str_contains($q, 'like'));
+            $searched[] = (bool) array_filter(array_column($db->getQueryLog(), 'query'), fn ($q) => stripos($q, 'like') !== false);
             $db->disableQueryLog();
         }
 

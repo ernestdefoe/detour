@@ -45,8 +45,17 @@ final class Compiler
                 $set[$mode]['exact'][$rule['match']] ??= $rule;
                 break;
             case 'prefix':
-                $set[$mode]['prefix'][] = $rule;
-                usort($set[$mode]['prefix'], fn ($a, $b) => strlen($b['match']) <=> strlen($a['match']));
+                // Longest first, kept sorted as rules arrive (one sort per add
+                // made compiling thousands of rules quadratic).
+                $list = $set[$mode]['prefix'];
+                $length = strlen($rule['match']);
+                [$low, $high] = [0, count($list)];
+                while ($low < $high) {
+                    $mid = intdiv($low + $high, 2);
+                    strlen($list[$mid]['match']) >= $length ? $low = $mid + 1 : $high = $mid;
+                }
+                array_splice($list, $low, 0, [$rule]);
+                $set[$mode]['prefix'] = $list;
                 break;
             default:
                 $set[$mode]['regex'][] = $rule;
@@ -64,9 +73,11 @@ final class Compiler
         $type = (string) $row['type'];
         $source = (string) $row['source'];
 
+        [$path, $query] = Url::split($source);
+
         $match = match ($type) {
-            'exact' => Url::key($source),
-            'prefix' => Url::lower(Url::trimSlash(explode('?', $source, 2)[0])),
+            'exact' => Url::key(Url::subject($path, $query)),
+            'prefix' => Url::lower(Url::trimSlash(Url::subject($path, ''))),
             'regex' => self::pattern($source),
             default => null,
         };

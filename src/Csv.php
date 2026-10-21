@@ -5,7 +5,7 @@ namespace Ernestdefoe\Detour;
 /** Reading and writing the redirect CSV. */
 final class Csv
 {
-    public const COLUMNS = ['type', 'source', 'target', 'status', 'mode', 'keep_query', 'external', 'lookup', 'enabled', 'note'];
+    public const COLUMNS = ['type', 'source', 'target', 'status', 'mode', 'keep_query', 'external', 'lookup', 'run_id', 'preset', 'enabled', 'note'];
 
     /**
      * @param iterable<array<int|string, mixed>> $rows

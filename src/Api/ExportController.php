@@ -26,7 +26,7 @@ class ExportController implements RequestHandlerInterface
             $name = 'detour-404-log.csv';
         } else {
             $csv = Csv::write(Csv::COLUMNS, Redirect::query()->orderBy('id')->cursor()->map(fn (Redirect $r) => [
-                $r->type, $r->source, $r->target, $r->status, $r->mode, $r->keep_query, $r->external, $r->lookup, $r->enabled, $r->note,
+                $r->type, $r->source, $r->target, $r->status, $r->mode, $r->keep_query, $r->external, $r->lookup, $r->run_id, $r->preset, $r->enabled, $r->note,
             ]));
             $name = 'detour-redirects.csv';
         }

@@ -20,6 +20,9 @@ class Validator
     /** @var array<string, mixed>|null compiled set the checks run against */
     private ?array $set = null;
 
+    /** @var array<int, bool> Importer runs already checked */
+    private array $runs = [];
+
     public function __construct(
         protected Matcher $matcher,
         protected UrlGenerator $url,
@@ -91,7 +94,7 @@ class Validator
         if (! in_array($mode, Redirect::MODES, true)) {
             $this->fail('mode', 'mode_invalid');
         }
-        if (mb_strlen($note) > 255) {
+        if (! mb_check_encoding($note, 'UTF-8') || mb_strlen($note) > 255) {
             $this->fail('note', 'note_long');
         }
 
@@ -109,28 +112,30 @@ class Validator
                 $this->fail('source', 'regex_home');
             }
         } else {
-            $normalized = Url::source($source);
-            if ($normalized === null) {
+            // Kept as typed (only a host or this forum's folder is cut off), so
+            // saving a rule again never decodes it a second time.
+            $raw = Url::raw($source, $this->url->to('forum')->base());
+            if ($raw === null) {
                 $this->fail('source', 'source_path');
             }
+            [$path] = Url::split($raw);
             if ($type === 'prefix') {
-                $normalized = Url::trimSlash(explode('?', $normalized, 2)[0]);
+                $raw = $path;
             }
-            if (Url::trimSlash(explode('?', $normalized, 2)[0]) === '/') {
+            $decoded = Url::trimSlash(Url::subject($path, ''));
+            if ($decoded === '/') {
                 $this->fail('source', 'source_home');
             }
-            if (Url::reserved(explode('?', $normalized, 2)[0])) {
+            if (Url::reserved($decoded)) {
                 $this->fail('source', 'source_reserved');
             }
-            $source = $normalized;
-        }
+            $source = $raw;
 
-        // Duplicates of the same address in the same phase.
-        if ($type !== 'regex') {
-            $key = $type === 'exact' ? Url::key($source) : Url::lower($source);
+            // Duplicates of the same address in the same phase.
+            $match = Compiler::rule(['id' => 0, 'type' => $type, 'source' => $source, 'status' => $status])['match'] ?? null;
             $taken = $type === 'exact'
-                ? isset($set[$mode]['exact'][$key])
-                : in_array($key, array_column($set[$mode]['prefix'], 'match'), true);
+                ? isset($set[$mode]['exact'][$match])
+                : in_array($match, array_column($set[$mode]['prefix'], 'match'), true);
             if ($taken) {
                 $this->fail('source', 'duplicate');
             }
@@ -141,6 +146,9 @@ class Validator
         if ($lookup !== null) {
             if ($type !== 'regex' || ! in_array($lookup, Redirect::LOOKUPS, true)) {
                 $this->fail('lookup', 'lookup_invalid');
+            }
+            if ($runId !== null && ! $this->runExists($runId)) {
+                $this->fail('runId', 'run_unknown');
             }
             $target = null;
             $external = false;
@@ -232,7 +240,7 @@ class Validator
         if ($columns['type'] === 'regex') {
             // Only a target without captures can be checked: does it match its own rule?
             if (! preg_match('~\$\{?\d~', (string) $columns['target'])) {
-                [$p, $q] = array_pad(explode('?', (string) $columns['target'], 2), 2, '');
+                [$p, $q] = Url::split((string) $columns['target']);
                 if (@preg_match($candidate['match'], Url::subject($p, $q)) === 1) {
                     $this->fail('target', 'loop');
                 }
@@ -241,14 +249,26 @@ class Validator
             return;
         }
 
+        // Follow the chain through rules of both kinds: two "only if missing"
+        // rules pointing at each other loop just as surely when both pages are gone.
         $with = Compiler::add($set, ['id' => 0] + $columns);
-        [$path, $query] = array_pad(explode('?', (string) $columns['source'], 2), 2, '');
-        $path = Url::encode($path);
+        [$path, $query] = Url::split((string) $columns['source']);
 
-        $hit = $this->matcher->match($with, $columns['mode'], $path, str_replace(['%', '+'], ['%25', '%2B'], $query), $base);
-
-        if ($hit === null) {
+        if ($this->matcher->match($with, $columns['mode'], $path, $query, $base, ['always', 'missing']) === null) {
             $this->fail('target', 'loop');
+        }
+    }
+
+    private function runExists(int $runId): bool
+    {
+        if (isset($this->runs[$runId])) {
+            return $this->runs[$runId];
+        }
+
+        try {
+            return $this->runs[$runId] = $this->db->table('importer_runs')->where('id', $runId)->exists();
+        } catch (\Throwable) {
+            return $this->runs[$runId] = false;
         }
     }
 

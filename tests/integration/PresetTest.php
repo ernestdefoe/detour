@@ -44,7 +44,7 @@ class PresetTest extends DetourTestCase
     {
         $this->api('POST', '/presets', ['platform' => 'xenforo']);
         $this->api('POST', '/presets', ['platform' => 'xenforo']);
-        $this->assertSame(5, Redirect::query()->where('preset', 'xenforo')->count());
+        $this->assertSame(count(\Ernestdefoe\Detour\Rules\Presets::for('xenforo')), Redirect::query()->where('preset', 'xenforo')->count());
 
         $this->api('POST', '/presets', ['platform' => 'xenforo', 'remove' => true]);
         $this->assertSame(0, Redirect::query()->count());

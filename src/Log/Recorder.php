@@ -39,7 +39,7 @@ class Recorder
             return false;
         }
 
-        $path = Url::lower(rawurldecode($request->getUri()->getPath()));
+        $path = Url::lower(Url::subject($request->getUri()->getPath(), ''));
 
         if (preg_match(self::ASSET, $path)) {
             return false;
@@ -164,7 +164,7 @@ class Recorder
     /** The referring page without its query or fragment (which can carry tokens), or null. */
     private function referrer(string $header): ?string
     {
-        if ($header === '' || ! preg_match('~^https?://~i', $header) || Url::hasControl($header)) {
+        if ($header === '' || ! preg_match('~^https?://~i', $header) || Url::hasControl($header) || ! mb_check_encoding($header, 'UTF-8')) {
             return null;
         }
 

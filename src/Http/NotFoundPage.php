@@ -22,8 +22,9 @@ use Psr\Http\Message\ServerRequestInterface;
  * discussions whose titles share those words.
  *
  * Suggestions are what a guest can see, so they are the same for everyone and
- * cached per set of words: a bot hammering one dead address costs one query an
- * hour, and nobody is ever shown a title they could not open.
+ * cached for ten minutes per set of words: a bot hammering one dead address
+ * costs one query every ten minutes, and nobody is ever shown a title they
+ * could not open.
  */
 class NotFoundPage
 {
@@ -75,7 +76,7 @@ class NotFoundPage
     /** @return list<string> up to four meaningful words from the address */
     public function words(string $path): array
     {
-        $text = Url::lower(rawurldecode($path));
+        $text = Url::lower(Url::subject($path, ''));
         $words = preg_split('~[^\pL\pN]+~u', $text, -1, PREG_SPLIT_NO_EMPTY) ?: [];
 
         $words = array_filter($words, fn ($w) => mb_strlen($w) >= 3 && ! ctype_digit($w) && ! in_array($w, self::STOP, true));
@@ -114,14 +115,12 @@ class NotFoundPage
             return [];
         }
 
-        return $this->cache->remember($key, 3600, function () use ($words) {
+        return $this->cache->remember($key, 600, function () use ($words) {
             $query = Discussion::query()->whereVisibleTo(new Guest());
 
-            $like = Like::operator($query->getQuery());
-
-            $query->where(function ($q) use ($words, $like) {
+            $query->where(function ($q) use ($words) {
                 foreach ($words as $word) {
-                    $q->orWhere('title', $like, Like::pattern($word));
+                    Like::where($q, 'title', $word, 'or');
                 }
             });
 

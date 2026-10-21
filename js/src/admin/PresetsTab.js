@@ -12,6 +12,7 @@ export default class PresetsTab extends Component {
     super.oninit(vnode);
     this.platforms = null;
     this.runs = [];
+    this.importerRedirects = false;
     this.choice = {};
     this.busy = null;
     this.load();
@@ -21,6 +22,7 @@ export default class PresetsTab extends Component {
     return request('GET', '/presets').then((response) => {
       this.platforms = response.platforms;
       this.runs = response.runs;
+      this.importerRedirects = response.importerRedirects;
       m.redraw();
     });
   }
@@ -32,6 +34,7 @@ export default class PresetsTab extends Component {
       <div className="DetourTab">
         <p className="helpText">{t('presets.help')}</p>
         {this.runs.length ? <p className="helpText">{t('presets.importer_help')}</p> : null}
+        {this.importerRedirects ? <div className="Alert Alert--warning DetourWarning">{t('presets.importer_on')}</div> : null}
 
         <ServerCheck />
 

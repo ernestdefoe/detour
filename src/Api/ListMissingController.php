@@ -31,7 +31,7 @@ class ListMissingController implements RequestHandlerInterface
 
         $q = trim((string) $this->param($request, 'q', ''));
         if ($q !== '') {
-            $query->where('url', Like::operator($query->getQuery()), Like::pattern($q));
+            Like::where($query, 'url', $q);
         }
 
         $total = $query->count();

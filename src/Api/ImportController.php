@@ -4,6 +4,7 @@ namespace Ernestdefoe\Detour\Api;
 
 use Ernestdefoe\Detour\Csv;
 use Ernestdefoe\Detour\Redirect;
+use Ernestdefoe\Detour\Rules\Presets;
 use Ernestdefoe\Detour\Rules\RuleSet;
 use Ernestdefoe\Detour\Rules\Validator;
 use Flarum\Foundation\ValidationException;
@@ -78,6 +79,7 @@ class ImportController implements RequestHandlerInterface
 
                 $redirect = new Redirect();
                 $redirect->forceFill($columns);
+                $redirect->preset = $columns['lookup'] !== null && Presets::for((string) ($input['preset'] ?? '')) !== [] ? $input['preset'] : null;
                 $redirect->position = $columns['type'] === 'regex' ? ++$position : 0;
 
                 if (! $dryRun) {
@@ -136,6 +138,10 @@ class ImportController implements RequestHandlerInterface
             'keepQuery' => $flag('keep_query', false),
             'external' => $flag('external', false),
             'lookup' => ($row['lookup'] ?? '') !== '' ? $row['lookup'] : null,
+            // An Importer run id means something only on the forum it came
+            // from; the checks refuse one that does not exist here.
+            'runId' => ($row['run_id'] ?? '') !== '' ? (int) $row['run_id'] : null,
+            'preset' => $row['preset'] ?? '',
             'enabled' => $flag('enabled', true),
             'note' => $row['note'] ?? '',
         ];

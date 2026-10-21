@@ -15,12 +15,28 @@ final class Url
     /** Paths Detour never redirects, logs or serves its page for. */
     public const RESERVED = ['/api', '/admin', '/assets', '/auth', '/login', '/logout', '/register', '/reset', '/confirm', '/notifications/unsubscribe'];
 
-    /** The decoded subject a rule is matched against: path, then `?query` when there is one. */
+    /**
+     * The decoded subject a rule is matched against: path, then `?query` when
+     * there is one. Old forums often linked in Latin-1 (`caf%E9`), which is not
+     * UTF-8 once decoded; such text is read as Windows-1252 so it still matches.
+     */
     public static function subject(string $path, string $query): string
     {
         $subject = rawurldecode($path === '' ? '/' : $path);
 
-        return $query === '' ? $subject : $subject.'?'.urldecode($query);
+        if ($query !== '') {
+            $subject .= '?'.urldecode($query);
+        }
+
+        return mb_check_encoding($subject, 'UTF-8') ? $subject : mb_convert_encoding($subject, 'UTF-8', 'Windows-1252');
+    }
+
+    /** A raw source or address split into its path and query. @return array{0: string, 1: string} */
+    public static function split(string $raw): array
+    {
+        [$path, $query] = array_pad(explode('?', explode('#', $raw, 2)[0], 2), 2, '');
+
+        return [$path === '' ? '/' : $path, $query];
     }
 
     /**
@@ -58,30 +74,42 @@ final class Url
 
     /**
      * What an admin typed (or a CSV row or a 404 log entry held) as a source,
-     * turned into a decoded path with an optional query. A full URL keeps
-     * only its path and query, so an address copied from the old site works.
+     * kept as typed: a path with an optional query, never decoded here, so
+     * saving it again changes nothing. A full URL keeps only its path and
+     * query (and loses this forum's own folder, when it is this forum's
+     * address), so an address copied from a browser works.
+     *
+     * @param string $base the forum's base URL
      */
-    public static function source(string $input): ?string
+    public static function raw(string $input, string $base = ''): ?string
     {
         $input = trim($input);
 
-        if (preg_match('~^https?://~i', $input)) {
-            $parts = parse_url($input);
-            if ($parts === false) {
-                return null;
-            }
-            $input = ($parts['path'] ?? '/').(isset($parts['query']) ? '?'.$parts['query'] : '');
-        }
-
-        $input = explode('#', $input, 2)[0];
-
-        if ($input === '' || $input[0] !== '/' || self::hasControl($input)) {
+        if (! mb_check_encoding($input, 'UTF-8') || self::hasControl($input)) {
             return null;
         }
 
-        [$path, $query] = array_pad(explode('?', $input, 2), 2, '');
+        if (preg_match('~^https?://~i', $input)) {
+            $base = rtrim($base, '/');
+            if ($base !== '' && stripos($input.'/', $base.'/') === 0) {
+                $input = substr($input, strlen($base));
+                $input = $input === '' || $input[0] !== '/' ? '/'.$input : $input;
+            } else {
+                $parts = parse_url($input);
+                if ($parts === false) {
+                    return null;
+                }
+                $input = ($parts['path'] ?? '/').(isset($parts['query']) ? '?'.$parts['query'] : '');
+            }
+        }
 
-        return self::subject($path, $query);
+        $input = str_replace(' ', '%20', explode('#', $input, 2)[0]);
+
+        if ($input === '' || $input[0] !== '/' || preg_match('~\s~u', $input)) {
+            return null;
+        }
+
+        return $input;
     }
 
     public static function reserved(string $decodedPath): bool

@@ -4,6 +4,7 @@ namespace Ernestdefoe\Detour\Api;
 
 use Ernestdefoe\Detour\Redirect;
 use Ernestdefoe\Detour\Rules\Presets;
+use Flarum\Settings\SettingsRepositoryInterface;
 use Illuminate\Database\ConnectionInterface;
 use Laminas\Diactoros\Response\JsonResponse;
 use Psr\Http\Message\ResponseInterface;
@@ -18,6 +19,7 @@ class ListPresetsController implements RequestHandlerInterface
 
     public function __construct(
         protected ConnectionInterface $db,
+        protected SettingsRepositoryInterface $settings,
     ) {
     }
 
@@ -42,7 +44,12 @@ class ListPresetsController implements RequestHandlerInterface
             ];
         }
 
-        return new JsonResponse(['platforms' => $platforms, 'runs' => $this->runs()]);
+        return new JsonResponse([
+            'platforms' => $platforms,
+            'runs' => $this->runs(),
+            // The Importer's own old-address redirects answer before Detour's presets.
+            'importerRedirects' => (int) $this->settings->get('ernestdefoe-importer.redirect_run', 0) > 0,
+        ]);
     }
 
     /** @return list<array<string, mixed>> */

@@ -52,6 +52,8 @@ class ApplyPresetController implements RequestHandlerInterface
         $created = 0;
 
         $this->db->transaction(function () use ($platform, $patterns, $remove, $runId, &$created) {
+            // A reinstall keeps what the admin changed on a rule it replaces.
+            $kept = Redirect::query()->where('preset', $platform)->get(['source', 'enabled', 'status'])->keyBy('source');
             Redirect::query()->where('preset', $platform)->delete();
 
             if ($remove) {
@@ -63,18 +65,19 @@ class ApplyPresetController implements RequestHandlerInterface
             $rows = [];
 
             foreach ($patterns as [$lookup, $pattern, $example]) {
+                $old = $kept->get($pattern);
                 $rows[] = [
                     'type' => 'regex',
                     'source' => $pattern,
                     'target' => null,
-                    'status' => 301,
+                    'status' => $old ? $old->status : 301,
                     'mode' => 'missing',
                     'keep_query' => false,
                     'external' => false,
                     'lookup' => $lookup,
                     'run_id' => $runId,
                     'preset' => $platform,
-                    'enabled' => true,
+                    'enabled' => $old ? $old->enabled : true,
                     'position' => ++$position,
                     'hits' => 0,
                     'note' => $example,
