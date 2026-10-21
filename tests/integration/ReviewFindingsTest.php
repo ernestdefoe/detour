@@ -5,7 +5,6 @@ namespace Ernestdefoe\Detour\Tests\integration;
 use Ernestdefoe\Detour\Redirect;
 use Ernestdefoe\Detour\Rules\Compiler;
 use Ernestdefoe\Detour\Url;
-use Illuminate\Database\Schema\Blueprint;
 use PHPUnit\Framework\Attributes\Test;
 
 /** One test per defect the pre-release adversarial review found; each fails on the code before its fix. */
@@ -81,32 +80,23 @@ class ReviewFindingsTest extends DetourTestCase
     public function csv_keeps_a_rules_importer_run_and_preset_and_refuses_unknown_runs(): void
     {
         $this->app();
-        $schema = $this->database()->getSchemaBuilder();
-        $schema->create('importer_runs', function (Blueprint $table) {
-            $table->increments('id');
-            $table->string('source', 40);
-        });
 
-        try {
-            $this->database()->table('importer_runs')->insert(['id' => 3, 'source' => 'phpbb']);
-            $this->api('POST', '/presets', ['platform' => 'phpbb', 'runId' => 3]);
+        $this->database()->table('importer_runs')->insert(['id' => 3, 'source' => 'phpbb']);
+        $this->api('POST', '/presets', ['platform' => 'phpbb', 'runId' => 3]);
 
-            $csv = (string) $this->api('GET', '/export')->getBody();
-            Redirect::query()->delete();
+        $csv = (string) $this->api('GET', '/export')->getBody();
+        Redirect::query()->delete();
 
-            $result = $this->json($this->api('POST', '/import', ['csv' => $csv]));
-            $this->assertSame(4, $result['created'], json_encode($result));
-            $this->assertSame([3], Redirect::query()->distinct()->pluck('run_id')->all());
-            $this->assertSame(['phpbb'], Redirect::query()->distinct()->pluck('preset')->all());
+        $result = $this->json($this->api('POST', '/import', ['csv' => $csv]));
+        $this->assertSame(4, $result['created'], json_encode($result));
+        $this->assertSame([3], Redirect::query()->distinct()->pluck('run_id')->all());
+        $this->assertSame(['phpbb'], Redirect::query()->distinct()->pluck('preset')->all());
 
-            Redirect::query()->delete();
-            $this->database()->table('importer_runs')->delete();
-            $result = $this->json($this->api('POST', '/import', ['csv' => $csv]));
-            $this->assertSame(0, $result['created']);
-            $this->assertSame(4, $result['failed']);
-        } finally {
-            $schema->dropIfExists('importer_runs');
-        }
+        Redirect::query()->delete();
+        $this->database()->table('importer_runs')->delete();
+        $result = $this->json($this->api('POST', '/import', ['csv' => $csv]));
+        $this->assertSame(0, $result['created']);
+        $this->assertSame(4, $result['failed']);
     }
 
     #[Test]

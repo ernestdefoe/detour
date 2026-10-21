@@ -90,7 +90,7 @@ class Recorder
         }
 
         try {
-            $table->clone()->insert([
+            $id = $table->clone()->insertGetId([
                 'url_hash' => $hash,
                 'url' => $url,
                 'hits' => 1,
@@ -109,7 +109,8 @@ class Recorder
             return;
         }
 
-        if (random_int(1, self::PRUNE_EVERY) === 1) {
+        // Every so many new rows, by id, so the cap holds within that many.
+        if ($id % self::PRUNE_EVERY === 0) {
             $this->prune();
         }
     }

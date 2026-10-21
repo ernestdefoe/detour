@@ -108,7 +108,7 @@ class MissingLogTest extends DetourTestCase
             $this->get("/scan-$i");
         }
 
-        // Pruning runs on one in 25 new rows, so the table can only overshoot by a little.
-        $this->assertLessThan(200, Missing::query()->count());
+        // Pruning runs on every 25th new row, so the table overshoots by fewer than 25.
+        $this->assertLessThan(125, Missing::query()->count());
     }
 }
